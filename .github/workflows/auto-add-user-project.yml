@@ -1,0 +1,45 @@
+name: Add issue/PR to user's project
+
+on:
+  workflow_call:
+    inputs:
+      username:
+        required: false
+        type: string
+        description: "GitHub username of the person assigned to the Issue or PR"
+        default: ${{ github.event.assignee.login }}
+      user_projects:
+        required: false
+        type: string
+        description: "URL of a yaml file mapping usernames to project boards"
+        default: https://raw.githubusercontent.com/neighborhood-scientist/.github/main/.github/user-kanbans.yml
+    secrets:
+      ADD_TO_PROJECT_PAT:
+        required: true
+
+permissions:
+  issues: read
+  pull-requests: read
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: download yaml
+        run: |
+          wget ${{ inputs.user_projects }}
+
+      - uses: pietrobolcato/action-read-yaml@1.1.0
+        id: metadata
+        with:
+          config: user-kanbans.yml
+
+      - name: echo
+        run: |
+          echo ${{ inputs.username }} ${{ steps.metadata.outputs[inputs.username] }}
+
+      - uses: actions/add-to-project@v0.5.0
+        if: ${{ steps.metadata.outputs[inputs.username] != '' }}
+        with:
+          project-url: ${{ steps.metadata.outputs[inputs.username] }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
