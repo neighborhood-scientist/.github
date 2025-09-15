@@ -25,6 +25,14 @@ jobs:
   add-to-project:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+            app-id: ${{ vars.YNS_APP_ID }}
+            private-key: ${{ secrets.YNS_PRIVATE_KEY }}
+
       - name: download yaml
         run: |
           wget ${{ inputs.user_projects }}
@@ -42,4 +50,4 @@ jobs:
         if: ${{ steps.metadata.outputs[inputs.username] != '' }}
         with:
           project-url: ${{ steps.metadata.outputs[inputs.username] }}
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ steps.generate-token.outputs.token }}
